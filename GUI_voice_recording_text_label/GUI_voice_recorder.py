@@ -5,11 +5,29 @@ from tkinter.filedialog import asksaveasfile
 import sounddevice as sd
 import soundfile as sf
 from tkinter import *
+from tkinter import messagebox
+
+
+
+def create_data_folder():
+    if not os.path.exists('data_from_recordings'):
+        os.makedirs('data_from_recordings')
+        messagebox.showinfo("showinfo", "Folder created")
+    else:
+        messagebox.showwarning("showwarning", "Folder already existing, can't overwrite it")
+
+
+def is_in_dir_data():
+    if 'data_from_recordings' in os.getcwd():
+        return True
+    else:
+        os.chdir('data_from_recordings')
 
 
 def Voice_rec():
-    fs = 48000
+    is_in_dir_data()
 
+    fs = 48000
     # seconds
     duration = 3
     myrecording = sd.rec(int(duration * fs),
@@ -17,23 +35,33 @@ def Voice_rec():
     sd.wait()
     filename = str(file_text_box.get(1.0, END))
     filename = filename.replace('\n', ' ')
-    os.chdir('data_from_recordings')
-    print(os.getcwd())
     return sf.write(filename + ".wav", myrecording, fs)
 
 
 def save_text():
+    is_in_dir_data()
+
     name_of_file = file_text_box.get(1.0, END)
     name_of_file = name_of_file.replace('\n', ' ')
     text_file = open(name_of_file + ".txt", "w")
     text_file.write(my_text_box.get(1.0, END))
     text_file.close()
 
+
 # Create an instance of tkinter window with a frame
 win = Tk()
 win.title("Txt and WAV generator for easy data recording and labeling")
-win.geometry("500x250")
+win.geometry("500x500")
 fm = Frame(win)
+
+# Creating a label for creating folder
+label_1 = Label(fm, text="If data_from_recordings folder does not exist, press the button to generate it")
+label_1.pack(side=TOP, expand=YES)
+# Create a button to start the recording and save it in wav
+voice_recorder = Button(fm, text="Generate folder",
+                        command=create_data_folder)
+voice_recorder.pack(side=TOP, expand=YES)
+fm.pack(fill=BOTH, expand=YES)
 
 # Creating a label
 label_1 = Label(fm, text="The textbox below is the name of the file\n It will be the same for the recording and the "
