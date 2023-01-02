@@ -14,9 +14,10 @@ We trained a model to recognize who talks.
 ## File architecture
 
 You will find different folder:
-  - tools -- (py or ipynb to either convert file or record voice/label)
-  - data -- (empty but with a link to the data we used if you want to retrain your models)
-  - models -- (different models in py or ipynb)
+  - tools -- py or ipynb to either convert file or record voice/label
+  - data -- empty but with a link to the data we used if you want to retrain your models
+  - models -- different models in py or ipynb
+  - GUI_voice_recording_text_label -- little GUI to record and generate a text/wav with the same name
 
 ## Credits
 
