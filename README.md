@@ -18,4 +18,15 @@ You will find different folder:
   - data -- (empty but with a link to the data we used if you want to retrain your models)
   - models -- (different models in py or ipynb)
 
-  
+## Credits
+
+We used AudioMNIST, ATT-HACK repo and research paper to do our projects.
+Links are below
+1. ATT-HACK
+   - REPO: https://gitlab.com/nicolasobin/att-hack/-/blob/master/README.md
+   - PAPER: https://arxiv.org/pdf/2004.04410.pdf
+   - DATA: https://openslr.org/88/
+2. AudioMNIST
+   - REPO: https://github.com/soerenab/AudioMNIST
+   - PAPER: https://arxiv.org/pdf/1807.03418.pdf
+   - DATA: Inside the repo
