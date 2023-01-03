@@ -36,8 +36,8 @@ venv/*
 /logs_100_epochs/train/events.out.tfevents.1671048109.DESKTOP-D177035.7544.0.v2
 /logs_100_epochs/validation/events.out.tfevents.1671051854.DESKTOP-D177035.7544.1.v2
 /logs_100_epochs/train/events.out.tfevents.1671376873.DESKTOP-D177035.6468.0.v2
-/logs_51_epochs/train/events.out.tfevents.1671531564.DESKTOP-D177035.8956.0.v2
-/logs_51_epochs/validation/events.out.tfevents.1671535217.DESKTOP-D177035.8956.1.v2
+/logs/logs_51_epochs/train/events.out.tfevents.1671531564.DESKTOP-D177035.8956.0.v2
+/logs/logs_51_epochs/validation/events.out.tfevents.1671535217.DESKTOP-D177035.8956.1.v2
 /.idea/misc.xml
 /Saved_Model_OPEN_SLR/model_100_epochs.hdf5
 /Saved_Model_OPEN_SLR/model_all.hdf5
