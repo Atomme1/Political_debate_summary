@@ -17,6 +17,7 @@ recording_scripts/*.checkpoint*
 preprocessed_data/*
 Open_SLR_data/*
 venv/*
+/logs/*
 /.idea/.gitignore
 /.idea/AudioMNIST.iml
 /logs/train/events.out.tfevents.1670601915.DESKTOP-D177035.23204.0.v2
