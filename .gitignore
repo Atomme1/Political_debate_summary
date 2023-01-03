@@ -6,6 +6,7 @@
 # trained models
 models/*/runs/
 
+
 # (newly) collected recordings
 recording_scripts/data
 recording_scripts/meta.txt
