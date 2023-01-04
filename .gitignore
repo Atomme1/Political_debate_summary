@@ -57,3 +57,8 @@ venv/*
 /.idea/Political_debate_summary.iml
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/workspace.xml
+/Saved_Model_ATT_HACK/model_45_epochs.hdf5
+/Saved_Model_ATT_HACK/model_51_epochs.hdf5
+/Saved_Model_ATT_HACK/model_all.hdf5
+/Saved_Model_ATT_HACK/model_tensor.hdf5
+/Saved_Model_ATT_HACK/my_best_model.hdf5
