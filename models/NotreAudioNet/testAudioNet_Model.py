@@ -16,7 +16,8 @@ from keras.datasets import cifar10
 
 # Model configuration
 batch_size = 100
-img_width, img_height, img_num_channels = 227, 227, 1
+img_height, img_width, img_num_channels = 8000, 1, 1
+input_shape = (img_width, img_height, img_num_channels)
 loss_function = sparse_categorical_crossentropy
 no_classes = 10
 no_epochs = 1
@@ -26,7 +27,7 @@ verbosity = 1
 
 def build_model():
     model = tf.keras.Sequential()
-    model.add(layers.Conv2D(100, kernel_size=(1, 3), input_shape=(227, 227, 1), strides=(1, 1), activation='relu',
+    model.add(layers.Conv2D(100, kernel_size=(1, 3), input_shape=input_shape, strides=(1, 1), activation='relu',
                             padding='valid', name='conv1'))
 
     model.add(layers.MaxPooling2D(pool_size=(1, 3), strides=2, name='pool1'))
