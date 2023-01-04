@@ -34,7 +34,7 @@ def Voice_rec():
                          samplerate=fs, channels=2)
     sd.wait()
     filename = str(file_text_box.get(1.0, END))
-    filename = filename.replace('\n', ' ')
+    filename = filename.replace('\n', '')
     return sf.write(filename + ".wav", myrecording, fs)
 
 
@@ -42,7 +42,7 @@ def save_text():
     is_in_dir_data()
 
     name_of_file = file_text_box.get(1.0, END)
-    name_of_file = name_of_file.replace('\n', ' ')
+    name_of_file = name_of_file.replace('\n', '')
     text_file = open(name_of_file + ".txt", "w")
     text_file.write(my_text_box.get(1.0, END))
     text_file.close()
