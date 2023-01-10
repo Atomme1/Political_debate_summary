@@ -29,7 +29,7 @@ def Voice_rec():
 
     fs = 48000
     # seconds
-    duration = 3
+    duration = 8
     myrecording = sd.rec(int(duration * fs),
                          samplerate=fs, channels=2)
     sd.wait()

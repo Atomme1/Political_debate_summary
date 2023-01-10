@@ -31,3 +31,5 @@ Links are below
    - REPO: https://github.com/soerenab/AudioMNIST
    - PAPER: https://arxiv.org/pdf/1807.03418.pdf
    - DATA: Inside the repo
+
+We used the repo pyAudioAnalysis to segment and do a diarisation
