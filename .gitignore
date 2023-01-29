@@ -62,3 +62,5 @@ venv/*
 /Saved_Model_ATT_HACK/model_all.hdf5
 /Saved_Model_ATT_HACK/model_tensor.hdf5
 /Saved_Model_ATT_HACK/my_best_model.hdf5
+/data/*
+/data/FR_media_wav
