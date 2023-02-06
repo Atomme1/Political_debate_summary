@@ -5,18 +5,24 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 import matplotlib.pyplot as plt
-from IPython import display
 from jiwer import wer
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
 
+# from IPython import display
+
+
 def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_of_save):
+    df_wer = pd.DataFrame(columns=['WER', 'Epochs'])
+    df_wer.to_csv("WER_CSV", sep=';', encoding='utf-8', index=False)
+
     # CHECK GPU RUNNING WITH CUDA
     gpus = tf.config.list_physical_devices('GPU')
     gpu = gpus[0]
 
     tf.config.experimental.set_memory_growth(gpu, True)
+    print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
     # All wav files have been transform to 16bits 16kHz for 256 000 bits/sec
 
@@ -30,15 +36,21 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
     print(txt_files)
 
     for txt in txt_files:
-        myfile = open(PATH_TXT+txt, "rt", encoding="utf-8")  # open lorem.txt for reading text
+        myfile = open(PATH_TXT + txt, "rt", encoding="utf-8")  # open lorem.txt for reading text
         text = myfile.read()
-        text = text.replace("é", "e")
-        text = text.replace("è", "e")
-        text = text.replace("à", "a")
-        text = text.replace("û", "u")
-        text = text.replace("ê", "e")
-        text = text.replace("’", "'")
-        text = text.replace("ô", "o")
+        # text = text.replace("é", "e")
+        # text = text.replace("è", "e")
+        # text = text.replace("à", "a")
+        # text = text.replace("û", "u")
+        # text = text.replace("ê", "e")
+        # text = text.replace("’", "'")
+        # text = text.replace("ô", "o")
+        # text = text.replace("ï", "i")
+        # text = text.replace("ë", "e")
+        # text = text.replace("ù", "u")
+        # text = text.replace("ö", "o")
+        # text = text.replace("-", " ")
+        # text = text.replace(",", " ")
         wav_labels.append(text)  # read the entire file to string
         myfile.close()  # close the file
     print(wav_labels)  # print string contentsm
@@ -144,28 +156,29 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
 
-    #fig = plt.figure(figsize=(8, 5))
-    for batch in train_dataset.take(1):
-        spectrogram = batch[0][0].numpy()
-        spectrogram = np.array([np.trim_zeros(x) for x in np.transpose(spectrogram)])
-        label = batch[1][0]
-        print(label)
-        # Spectrogram
-        label = tf.strings.reduce_join(num_to_char(label)).numpy().decode("utf-8")
-        ax = plt.subplot(2, 1, 1)
-        ax.imshow(spectrogram, vmax=1)
-        ax.set_title(label)
-        ax.axis("off")
-        # Wav
-        file = tf.io.read_file(PATH_WAV + list(df_train["wav"])[0])
-        audio, _ = tf.audio.decode_wav(file)
-        audio = audio.numpy()
-        ax = plt.subplot(2, 1, 2)
-        plt.plot(audio)
-        ax.set_title("Signal Wave")
-        ax.set_xlim(0, len(audio))
-        display.display(display.Audio(np.transpose(audio), rate=16000))
-    plt.show()
+    # fig = plt.figure(figsize=(8, 5))
+    ## Print spectrogram
+    # for batch in train_dataset.take(1):
+    #     spectrogram = batch[0][0].numpy()
+    #     spectrogram = np.array([np.trim_zeros(x) for x in np.transpose(spectrogram)])
+    #     label = batch[1][0]
+    #     print(label)
+    #     # Spectrogram
+    #     label = tf.strings.reduce_join(num_to_char(label)).numpy().decode("utf-8")
+    #     ax = plt.subplot(2, 1, 1)
+    #     ax.imshow(spectrogram, vmax=1)
+    #     ax.set_title(label)
+    #     ax.axis("off")
+    #     # Wav
+    #     file = tf.io.read_file(PATH_WAV + list(df_train["wav"])[0])
+    #     audio, _ = tf.audio.decode_wav(file)
+    #     audio = audio.numpy()
+    #     ax = plt.subplot(2, 1, 2)
+    #     plt.plot(audio)
+    #     ax.set_title("Signal Wave")
+    #     ax.set_xlim(0, len(audio))
+    #     display.display(display.Audio(np.transpose(audio), rate=16000))
+    # plt.show()
 
     def CTCLoss(y_true, y_pred):
         # Compute the training-time loss value
@@ -296,10 +309,22 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
                 print("-" * 100)
                 print(f"Word Error Rate: {wer_score:.4f}")
                 print("-" * 100)
-                for i in np.random.randint(0, len(predictions), 2):
-                    print(f"Target    : {targets[i]}")
-                    print(f"Prediction: {predictions[i]}")
-                    print("-" * 100)
+
+                df_wer = pd.read_csv("WER_CSV", sep=';', encoding='utf-8')
+                df_wer = df_wer.append({"WER": wer_score, "Epochs": epoch}, ignore_index=True)
+                df_wer.to_csv("WER_CSV", sep=';', encoding='utf-8', index=False)
+                with open('output_prediction.txt', 'a') as file_output:
+                    file_output.write(f"Epochs : {epoch}\n")
+                    file_output.write(f"Word Error Rate : {wer_score}\n")
+                    for i in np.random.randint(0, len(predictions), 2):
+                        file_output.write(f"Target    : {targets[i]}\n")
+                        file_output.write(f"Prediction    : {predictions[i]}\n")
+                        file_output.write("-----------------------------------\n")
+                        # print(f"Target    : {targets[i]}")
+                        # print(f"Prediction: {predictions[i]}")
+                        # print("-" * 100)
+                    file_output.write("----------------------------------------------------------------------\n")
+                    file_output.close()
 
     # Define the number of epochs.
     # Callback function to check transcription on the val set.
@@ -307,7 +332,7 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
 
     # checkpoint_filepath = 'C://Users//trist//PycharmProjects//AudioMNIST//Saved_Model_OPEN_SLR//model_51_epochs.hdf5'
     # Save model every 10 epochs
-    checkpoint_path = PATH_SAVED_MODEL+"/cp-{epoch:04d}.ckpt"
+    checkpoint_path = PATH_SAVED_MODEL + "/cp-{epoch:04d}.ckpt"
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_path,
         save_weights_only=True,
@@ -324,7 +349,7 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
         callbacks=[tensorboard_callback, validation_callback, model_checkpoint_callback],
     )
 
-    model_DeepSpeech_2.save_weights(PATH_SAVED_MODEL+'last_saved_model.hdf5')
+    model_DeepSpeech_2.save_weights(PATH_SAVED_MODEL + 'last_saved_model.hdf5')
 
     ## PARTIE VALIDATION PRÉDICTION
     # model_DeepSpeech_2 = build_model(
@@ -366,14 +391,48 @@ def escape_slashes(s):
     return s.replace('//', '\\')
 
 
+def preprocess_labels_before_training(PATH_TXT):
+    txt_files = [f for f in os.listdir(PATH_TXT)]
+    # print(txt_files)
+
+    for txt in txt_files:
+        print(txt_files.index(txt))
+        myfile_read = open(PATH_TXT + txt, "r+", encoding="utf-8")  # open lorem.txt for reading text
+        text = myfile_read.read()
+        print("BEFORE: " + text)
+        text = text.replace("é", "e")
+        text = text.replace("è", "e")
+        text = text.replace("à", "a")
+        text = text.replace("û", "u")
+        text = text.replace("ê", "e")
+        text = text.replace("’", "'")
+        text = text.replace("ô", "o")
+        text = text.replace("ï", "i")
+        text = text.replace("ë", "e")
+        text = text.replace("ù", "u")
+        text = text.replace("ö", "o")
+        text = text.replace("-", " ")
+        text = text.replace(",", " ")
+        print("AFTER: " + text)
+        myfile_read.close()  # close the file
+
+        myfile_replace = open(PATH_TXT + txt, "w+", encoding="utf-8")  # open lorem.txt for reading text
+        myfile_replace.write(text)
+
+        myfile_replace.close()  # close the file
+
+
 if __name__ == "__main__":
     # change parameters here
     PATH_WAV = "wav_all_16k_16bit_mono//wav//"
-    PATH_TXT = "wav_all_16k_16bit_mono//txt//"
+    # PATH_TXT = "wav_all_16k_16bit_mono//txt//"
+    PATH_TXT = "C://Users//trist//Desktop//txt_processed//"
     PATH_LOGS = "logs//"
     PATH_SAVED_MODEL = "saved_models_DeepSpeech2//"
     # saved_model_16k_16bit_mono
     epochs = 15
     freq_of_save = 50
     print("CURRENT WORKING DIRECTORY IS : " + os.getcwd())
-    do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs,freq_of_save)
+    # do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs,freq_of_save)
+    preprocess_labels_before_training(PATH_TXT)
+    print("DONE yeepee")
