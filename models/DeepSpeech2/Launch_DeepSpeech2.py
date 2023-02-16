@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from jiwer import wer
 from sklearn.model_selection import train_test_split
 from pathlib import Path
+import shutil
 
 
 # from IPython import display
@@ -18,10 +19,10 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
     df_wer.to_csv("WER_CSV", sep=';', encoding='utf-8', index=False)
 
     # CHECK GPU RUNNING WITH CUDA
-    gpus = tf.config.list_physical_devices('GPU')
-    gpu = gpus[0]
+    # gpus = tf.config.list_physical_devices('GPU')
+    # gpu = gpus[0]
 
-    tf.config.experimental.set_memory_growth(gpu, True)
+    # tf.config.experimental.set_memory_growth(gpu, True)
     print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
     # All wav files have been transform to 16bits 16kHz for 256 000 bits/sec
@@ -133,9 +134,9 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
         return spectrogram, label
 
     # test a single encoding to see if it works
-    encode_single_sample("0a7e5f3a-faa4-4e03-84ed-0719d20ec79d.wav", "oui")
+    # encode_single_sample("0a7e5f3a-faa4-4e03-84ed-0719d20ec79d.wav", "oui")
 
-    batch_size = 10
+    batch_size = 15
     # Define the trainig dataset
     train_dataset = tf.data.Dataset.from_tensor_slices(
         (list(df_train["wav"]), list(df_train["labels"]))
@@ -185,9 +186,10 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
         batch_len = tf.cast(tf.shape(y_true)[0], dtype="int64")
         input_length = tf.cast(tf.shape(y_pred)[1], dtype="int64")
         label_length = tf.cast(tf.shape(y_true)[1], dtype="int64")
-
+        print("CTC LENGHT")
         input_length = input_length * tf.ones(shape=(batch_len, 1), dtype="int64")
         label_length = label_length * tf.ones(shape=(batch_len, 1), dtype="int64")
+        print(label_length)
 
         loss = keras.backend.ctc_batch_cost(y_true, y_pred, input_length, label_length)
         return loss
@@ -247,6 +249,7 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
         # Model
         model_DeepSpeech_2 = keras.Model(input_spectrogram, output, name="DeepSpeech_2")
         # Optimizer
+
         opt = keras.optimizers.Adam(learning_rate=1e-4)
         # Compile the model and return
         model_DeepSpeech_2.compile(optimizer=opt, loss=CTCLoss)
@@ -306,9 +309,9 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
                         )
                         targets.append(label)
                 wer_score = wer(targets, predictions)
-                print("-" * 100)
-                print(f"Word Error Rate: {wer_score:.4f}")
-                print("-" * 100)
+                # print("-" * 100)
+                # print(f"Word Error Rate: {wer_score:.4f}")
+                # print("-" * 100)
 
                 df_wer = pd.read_csv("WER_CSV", sep=';', encoding='utf-8')
                 df_wer = df_wer.append({"WER": wer_score, "Epochs": epoch}, ignore_index=True)
@@ -382,15 +385,6 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
     #     print(f"Prediction: {predictions[i]}")
     #     print("-" * 100)
 
-
-def get_project_root() -> Path:
-    return Path(__file__).parent.parent.parent
-
-
-def escape_slashes(s):
-    return s.replace('//', '\\')
-
-
 def preprocess_labels_before_training(PATH_TXT):
     txt_files = [f for f in os.listdir(PATH_TXT)]
     # print(txt_files)
@@ -402,17 +396,31 @@ def preprocess_labels_before_training(PATH_TXT):
         print("BEFORE: " + text)
         text = text.replace("é", "e")
         text = text.replace("è", "e")
-        text = text.replace("à", "a")
-        text = text.replace("û", "u")
-        text = text.replace("ê", "e")
-        text = text.replace("’", "'")
-        text = text.replace("ô", "o")
-        text = text.replace("ï", "i")
         text = text.replace("ë", "e")
+        text = text.replace("ê", "e")
+
+        text = text.replace("à", "a")
+        text = text.replace("â", "a")
+        text = text.replace("ä", "a")
+
+        text = text.replace("ï", "i")
+        text = text.replace("î", "i")
+
+        text = text.replace("û", "u")
         text = text.replace("ù", "u")
+        text = text.replace("ü", "u")
+
         text = text.replace("ö", "o")
+        text = text.replace("ô", "o")
+
+        text = text.replace("œ", "oe")
+
+        text = text.replace("ç", "c")
+
         text = text.replace("-", " ")
         text = text.replace(",", " ")
+        text = text.replace("’", "'")
+
         print("AFTER: " + text)
         myfile_read.close()  # close the file
 
@@ -422,17 +430,70 @@ def preprocess_labels_before_training(PATH_TXT):
         myfile_replace.close()  # close the file
 
 
+def get_length_txt(PATH_TXT):
+    txt_files = [f for f in os.listdir(PATH_TXT)]
+    # print(txt_files)
+    wav_labels = []
+    # print(txt_files)
+
+    for txt in txt_files:
+        myfile = open(PATH_TXT + txt, "rt", encoding="utf-8")  # open lorem.txt for reading text
+        text = myfile.read()
+        wav_labels.append(text)  # read the entire file to string
+        myfile.close()  # close the file
+    # print(wav_labels)  # print string contentsm
+    # print(sorted(wav_labels, key=len))
+    txt_sorted = sorted(wav_labels, key=len)
+    # print(txt_sorted[-1])
+    nb_carac = []
+    for txt in wav_labels:
+        nb_carac.append(len(txt))
+    data_wav = {'FICHIER': txt_files, 'TXT': wav_labels, 'NB_CARAC': nb_carac}
+    df_file_txt = pd.DataFrame(data=data_wav)
+    dfsorted = df_file_txt.sort_values('TXT', key=lambda x: x.str.len())
+    print(dfsorted.tail(13))
+    return df_file_txt, dfsorted
+
+
+def move_tooLongFile_txt(list_txt, src_path, dst_path):
+    print(list_txt)
+    for txt in list_txt:
+        string_from_move = src_path + txt
+        string_where_move = dst_path + txt
+        print("string_from_move: " + string_from_move)
+        print("string_where_move: " + string_where_move)
+        shutil.move(string_from_move, string_where_move)
+
+
 if __name__ == "__main__":
     # change parameters here
     PATH_WAV = "wav_all_16k_16bit_mono//wav//"
-    # PATH_TXT = "wav_all_16k_16bit_mono//txt//"
-    PATH_TXT = "C://Users//trist//Desktop//txt_processed//"
+    PATH_TXT = "wav_all_16k_16bit_mono//txt_processed//"
+    PATH_TXT_DSTdump = "wav_all_16k_16bit_mono//txt_dump4//"
+    PATH_WAV_DSTdump = "wav_all_16k_16bit_mono//wav_dump4//"
     PATH_LOGS = "logs//"
     PATH_SAVED_MODEL = "saved_models_DeepSpeech2//"
     # saved_model_16k_16bit_mono
-    epochs = 15
-    freq_of_save = 50
+    epochs = 2
+    freq_of_save = 1
     print("CURRENT WORKING DIRECTORY IS : " + os.getcwd())
-    # do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs,freq_of_save)
-    preprocess_labels_before_training(PATH_TXT)
+    do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_of_save)
+    # preprocess_labels_before_training(PATH_TXT)
+    # wav_labels, dfsorted = get_length_txt(PATH_WAV_DSTdump)
+    # txt_files = dfsorted.FICHIER.values.tolist()
+    # # ---- wav file move to dump
+    # wav_files = []
+    # for wav in txt_files:
+    #     wav = wav.replace(".txt", ".wav")
+    #     wav_files.append(wav)
+    # print(wav_files)
+    # # ----- end
+    # # dfsorted.to_csv("TXTdump4_CSV", sep=';', encoding='utf-8', index=False)
+    # txt_files_to_dump = txt_files[0:39]
+    # move_tooLongFile_txt(txt_files_to_dump, PATH_WAV_DSTdump, PATH_WAV)
     print("DONE yeepee")
+
+
+
+
+
