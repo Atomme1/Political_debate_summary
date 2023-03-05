@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from jiwer import wer
 from sklearn.model_selection import train_test_split
 from pathlib import Path
-import shutil
 
 
 # from IPython import display
@@ -136,7 +135,7 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
     # test a single encoding to see if it works
     # encode_single_sample("0a7e5f3a-faa4-4e03-84ed-0719d20ec79d.wav", "oui")
 
-    batch_size = 15
+    batch_size = 10
     # Define the trainig dataset
     train_dataset = tf.data.Dataset.from_tensor_slices(
         (list(df_train["wav"]), list(df_train["labels"]))
@@ -186,10 +185,9 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
         batch_len = tf.cast(tf.shape(y_true)[0], dtype="int64")
         input_length = tf.cast(tf.shape(y_pred)[1], dtype="int64")
         label_length = tf.cast(tf.shape(y_true)[1], dtype="int64")
-        print("CTC LENGHT")
+
         input_length = input_length * tf.ones(shape=(batch_len, 1), dtype="int64")
         label_length = label_length * tf.ones(shape=(batch_len, 1), dtype="int64")
-        print(label_length)
 
         loss = keras.backend.ctc_batch_cost(y_true, y_pred, input_length, label_length)
         return loss
@@ -385,6 +383,15 @@ def do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_
     #     print(f"Prediction: {predictions[i]}")
     #     print("-" * 100)
 
+
+def get_project_root() -> Path:
+    return Path(__file__).parent.parent.parent
+
+
+def escape_slashes(s):
+    return s.replace('//', '\\')
+
+
 def preprocess_labels_before_training(PATH_TXT):
     txt_files = [f for f in os.listdir(PATH_TXT)]
     # print(txt_files)
@@ -455,45 +462,34 @@ def get_length_txt(PATH_TXT):
     return df_file_txt, dfsorted
 
 
-def move_tooLongFile_txt(list_txt, src_path, dst_path):
+import shutil
+
+
+def move_tooLongFile(list_txt, src_path, dst_path):
     print(list_txt)
     for txt in list_txt:
         string_from_move = src_path + txt
         string_where_move = dst_path + txt
         print("string_from_move: " + string_from_move)
         print("string_where_move: " + string_where_move)
-        shutil.move(string_from_move, string_where_move)
+        #shutil.move(string_from_move, string_where_move)
 
 
 if __name__ == "__main__":
     # change parameters here
-    PATH_WAV = "wav_all_16k_16bit_mono//wav//"
+    PATH_WAV = "wav_all_16k_16bit_mono//wav_test//"
+    # PATH_TXT = "wav_all_16k_16bit_mono//txt//"
     PATH_TXT = "wav_all_16k_16bit_mono//txt_processed//"
-    PATH_TXT_DSTdump = "wav_all_16k_16bit_mono//txt_dump4//"
-    PATH_WAV_DSTdump = "wav_all_16k_16bit_mono//wav_dump4//"
+    PATH_TXT_DST = "wav_all_16k_16bit_mono//txt_too_long_dump//"
     PATH_LOGS = "logs//"
     PATH_SAVED_MODEL = "saved_models_DeepSpeech2//"
     # saved_model_16k_16bit_mono
-    epochs = 2
-    freq_of_save = 1
+    epochs = 5
+    freq_of_save = 5
     print("CURRENT WORKING DIRECTORY IS : " + os.getcwd())
-    do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs, freq_of_save)
+    # do_everything(PATH_WAV, PATH_TXT, PATH_LOGS, PATH_SAVED_MODEL, epochs,freq_of_save)
     # preprocess_labels_before_training(PATH_TXT)
-    # wav_labels, dfsorted = get_length_txt(PATH_WAV_DSTdump)
-    # txt_files = dfsorted.FICHIER.values.tolist()
-    # # ---- wav file move to dump
-    # wav_files = []
-    # for wav in txt_files:
-    #     wav = wav.replace(".txt", ".wav")
-    #     wav_files.append(wav)
-    # print(wav_files)
-    # # ----- end
-    # # dfsorted.to_csv("TXTdump4_CSV", sep=';', encoding='utf-8', index=False)
-    # txt_files_to_dump = txt_files[0:39]
-    # move_tooLongFile_txt(txt_files_to_dump, PATH_WAV_DSTdump, PATH_WAV)
+    wav_labels, dfsorted = get_length_txt(PATH_TXT)
+    txt_files = dfsorted.FICHIER.values.tolist()
+    move_tooLongFile(txt_files,PATH_TXT, PATH_TXT_DST)
     print("DONE yeepee")
-
-
-
-
-
