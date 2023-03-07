@@ -27,11 +27,11 @@ def is_in_dir_data():
 def Voice_rec():
     is_in_dir_data()
 
-    fs = 48000
+    fs = 16000
     # seconds
-    duration = 8
+    duration = 30
     myrecording = sd.rec(int(duration * fs),
-                         samplerate=fs, channels=2)
+                         samplerate=fs, channels=1)
     sd.wait()
     filename = str(file_text_box.get(1.0, END))
     filename = filename.replace('\n', '')
