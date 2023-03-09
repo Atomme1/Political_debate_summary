@@ -24,6 +24,21 @@ from torchaudio import *
 from matplotlib import pyplot as plt
 from pyannote.core import notebook
 
+## for wordCloud
+import re
+import pandas as pd
+import nltk
+from nltk.corpus import wordnet
+from nltk.corpus import stopwords
+from nltk.metrics import ConfusionMatrix
+from nltk.stem.snowball import SnowballStemmer
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('stopwords')
+nltk.data.path += ['/mnt/share/nltk_data']
+from wordcloud import WordCloud
+
 
 def do_transcription():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -50,9 +65,10 @@ def do_transcription():
 
     predicted_sentence = processor_with_lm.batch_decode(logits.cpu().numpy()).text[0]
     print(predicted_sentence)
-    #clear textfox before inserting new prediction
-    TRANSCRIPTION_text_box.delete(1.0,END)
+    # clear textfox before inserting new prediction
+    TRANSCRIPTION_text_box.delete(1.0, END)
     TRANSCRIPTION_text_box.insert(END, predicted_sentence)
+
 
 # Function for opening the
 # file explorer window
@@ -73,13 +89,56 @@ def load_RTTM_PLOT():
     notebook.plot_annotation(timecodes, ax=ax, time=True, legend=True)
     plt.show()
 
-def do_NLP_WORDCLOUD():
+
+def do_NLP():
     print("yo")
+
+
+def do_WC():
+    print("yo")
+    stop_punctuation = [':', '(', ')', '/', '|', ',',
+                        '.', '*', '#', '"', '&', '~',
+                        '-', '_', '@', '?', '!']
+    stoplist = stopwords.words('french')
+    txts = []
+    for folder in os.listdir(path):
+        txts.extend(read_txt(path + "//chunk_Melenchon_Zemmour_txt//"))
+
+    df = pd.DataFrame(txts, columns=['txt_content'])
+    df["clean_txt"]=df.txt_content.apply(clean_text)
+
+    text_to_use = df['clean_txt'].values
+
+    wordcloud = WordCloud(background_color='white').generate(str(text_to_use))
+    plt.imshow(wordcloud)
+    plt.axis("off")
+    plt.show()
+
+def read_txt(folder):
+    txt_list = []
+    files_list = os.listdir(folder)
+    for file_name in files_list:
+        file_content = open(folder + file_name, 'r', encoding='utf-8')
+        txt_list.append(file_content.read())
+    file_content.close()
+    return txt_list
+
+
+def clean_text(text):
+    # Remove figures
+    text = re.sub(r'[^a-zA-Z]', ' ', text)
+    # Tokenization
+    words = text.lower().split()
+    stemmer = SnowballStemmer('french')
+    #lemmatizer = FrenchLefffLemmatizer()
+    words = [stemmer.stem(w) for w in words if w not in stoplist and not w in stop_punctuation ]
+    return ' '.join(words)
+
 
 # Create an instance of tkinter window with a frame
 win = Tk()
 win.title("WAV transcription ")
-#setting tkinter window size
+# setting tkinter window size
 win.geometry("800x800")
 
 fm = Frame(win)
@@ -141,40 +200,20 @@ TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
 TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
 # ______________________ TRANSCRIPTION end
 
-# ______________________ NLP and WordCloud
-# Creating a label NLP
-label_button_RTTM = Label(second_frame, text="Do the NLP and Wordcloud")
-label_button_RTTM.pack(side=TOP, expand=YES)
+# ______________________ NLP
 
-# Create a button to search and plot NLP WordCloud
-button_RTTM = Button(second_frame, text="Do NLP of TRANSCRIPTION", command=do_NLP_WORDCLOUD)
-button_RTTM.pack(side=TOP, expand=YES)
+# Create a button to search and plot NLP
+button_NLP = Button(second_frame, text="Do NLP of TRANSCRIPTION", command=do_NLP)
+button_NLP.pack(side=TOP, expand=YES)
 
+# ______________________ NLP end
 
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# Creating a text box for TRANSCRIPTION
-TRANSCRIPTION_text_box = Text(second_frame, height=7, width=120)
-TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
-# ______________________ NLP and WordCloud end
+# ______________________ WordCloud
+
+# Create a button to search and plot WordCloud
+button_WC = Button(second_frame, text="Do WordCloud of directory", command=do_WORDCLOUD)
+button_WC.pack(side=TOP, expand=YES)
+# ______________________ WordCloud end
+
 
 win.mainloop()
