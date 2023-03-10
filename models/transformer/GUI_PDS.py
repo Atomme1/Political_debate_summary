@@ -68,7 +68,7 @@ def do_transcription():
             prefix, suffix = os.path.splitext(f)
 
             # path to your audio file
-            waveform, sample_rate = torchaudio.load(wav_path_dir + '//'+ f)
+            waveform, sample_rate = torchaudio.load(wav_path_dir + '//' + f)
             waveform = waveform.squeeze(axis=0)  # mono
 
             # resample
@@ -117,11 +117,16 @@ def load_RTTM_PLOT():
     plt.show()
 
 
-def do_TFIDF_POSITIVITY():
-    # TFIDF part
+def get_sentences_of_textfield():
     nlp = spacy.load('fr_core_news_lg')
     transcript_of_textfield = str(TRANSCRIPTION_text_box.get(1.0, "end-1c"))
     doc = nlp(transcript_of_textfield)
+    return doc
+
+
+def do_TFIDF_POSITIVITY():
+    # TFIDF part
+    doc = get_sentences_of_textfield()
 
     tfidf_vectorizer = TfidfVectorizer()
     tfidf_text = tfidf_vectorizer.fit_transform([' '.join(lemma_punct_stop(doc))])
@@ -133,7 +138,10 @@ def do_TFIDF_POSITIVITY():
     sid = SentimentIntensityAnalyzer()
 
     sentences = [sentence.text for sentence in doc.sents]
-
+    sentences_clear = []
+    for sent in sentences:
+        sent.replace('\n\n','')
+        sentences_clear.append(sent)
     analyzer = pipeline(
         task='text-classification',
         model="cmarkea/distilcamembert-base-sentiment",
@@ -146,7 +154,7 @@ def do_TFIDF_POSITIVITY():
 
     df_camembert = pd.DataFrame(columns=["phrase", "label", "score"])
 
-    for sentence in sentences:
+    for sentence in sentences_clear:
         result = analyzer(sentence, return_all_scores=False)
         df_camembert = df_camembert.append(
             {"phrase": sentence, "label": result[0]['label'], "score": result[0]['score']}, ignore_index=True)
@@ -179,31 +187,31 @@ def plot_camembert(df):
 
     d = np.array(['1 star', '2 stars', '3 stars', '4 stars', '5 stars'])
 
-    y_Idx = np.where(np.unique(d) == np.expand_dims(y_values,-1))[1]
+    y_Idx = np.where(np.unique(d) == np.expand_dims(y_values, -1))[1]
 
-    fig,ax = plt.subplots()
+    fig, ax = plt.subplots()
     ax.plot(x_labels, y_Idx)
     ax.set_xlabel("phrase")
     ax.set_ylabel("Score")
     ax.set_title("Positivité par phrases")
-    plt.yticks(np.arange(len(d)),d)
+    plt.yticks(np.arange(len(d)), d)
     plt.show()
     return
 
 
 def do_WC():
-    path = browseDir()
+   # path = browseDir()
     print("yo")
+    doc = get_sentences_of_textfield()
+    sentences_clear = [sentence.text for sentence in doc.sents]
+   # txts = []
+   # txts.extend(read_txt(path + "/"))
 
-    txts = []
-
-    txts.extend(read_txt(path + "/"))
-
-    df = pd.DataFrame(txts, columns=['txt_content'])
+    df = pd.DataFrame(sentences_clear, columns=['txt_content'])
     df["clean_txt"] = df.txt_content.apply(clean_text)
 
     text_to_use = df['clean_txt'].values
-
+    print(text_to_use)
     wordcloud = WordCloud(background_color='white').generate(str(text_to_use))
     plt.imshow(wordcloud)
     plt.axis("off")
@@ -222,7 +230,7 @@ def read_txt(folder):
 
 def clean_text(text):
     # Remove figures
-    stop_punctuation = [':', '(', ')', '/', '|', ',',
+    stop_punctuation = ['\n\n', ':', '(', ')', '/', '|', ',',
                         '.', '*', '#', '"', '&', '~',
                         '-', '_', '@', '?', '!']
     stoplist = stopwords.words('french')
@@ -282,13 +290,13 @@ button_RTTM.pack(side=TOP, expand=YES)
 
 # Create a File Explorer label
 label_file_wav_explorer = Label(second_frame,
-                                text="Find the WAV file you want to translate",
+                                text="Find the WAV directory you want to translate",
                                 width=100, height=4,
                                 fg="blue")
 label_file_wav_explorer.pack(side=TOP, expand=YES)
 
 # Create a button to launch TRANSCRIPTION
-button_TRANSCRIPTION = Button(second_frame, text="Browse and do TRANSCRIPTION of WaV file", command=do_transcription)
+button_TRANSCRIPTION = Button(second_frame, text="Browse WaV dir and do TRANSCRIPTION", command=do_transcription)
 button_TRANSCRIPTION.pack(side=TOP, expand=YES)
 
 # Creating a label for TRANSCRIPTION textbox
@@ -306,7 +314,8 @@ TRANSCRIPTION_text_box.pack(side=TOP, expand=YES)
 # ______________________ NLP
 
 # Create a button to search and plot NLP
-button_do_TFIDF_POSITIVITY= Button(second_frame, text="Do NLP of TRANSCRIPTION \n tfidf and positivity", command=do_TFIDF_POSITIVITY)
+button_do_TFIDF_POSITIVITY = Button(second_frame, text="Do NLP of TRANSCRIPTION \n tfidf and positivity",
+                                    command=do_TFIDF_POSITIVITY)
 button_do_TFIDF_POSITIVITY.pack(side=TOP, expand=YES)
 
 # ______________________ NLP end
@@ -314,7 +323,7 @@ button_do_TFIDF_POSITIVITY.pack(side=TOP, expand=YES)
 # ______________________ WordCloud
 
 # Create a button to search and plot WordCloud
-button_WC = Button(second_frame, text="Browse dir and do WordCloud", command=do_WC)
+button_WC = Button(second_frame, text="do WordCloud of TRANSCRIPTION ", command=do_WC)
 button_WC.pack(side=TOP, expand=YES)
 # ______________________ WordCloud end
 
