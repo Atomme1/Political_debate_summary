@@ -43,7 +43,6 @@ from wordcloud import WordCloud
 # for NLP
 from vaderSentiment_fr.vaderSentiment import SentimentIntensityAnalyzer
 import spacy
-from spacy.lang.fr.examples import sentences
 import numpy as np
 import re
 import random
@@ -120,13 +119,14 @@ def load_RTTM_PLOT():
 def get_sentences_of_textfield():
     nlp = spacy.load('fr_core_news_lg')
     transcript_of_textfield = str(TRANSCRIPTION_text_box.get(1.0, "end-1c"))
+    transcript_of_textfield = transcript_of_textfield.replace('\n\n','')
     doc = nlp(transcript_of_textfield)
-    return doc
+    return doc, transcript_of_textfield
 
 
 def do_TFIDF_POSITIVITY():
     # TFIDF part
-    doc = get_sentences_of_textfield()
+    doc, transcript_of_textfield = get_sentences_of_textfield()
 
     tfidf_vectorizer = TfidfVectorizer()
     tfidf_text = tfidf_vectorizer.fit_transform([' '.join(lemma_punct_stop(doc))])
@@ -137,21 +137,21 @@ def do_TFIDF_POSITIVITY():
     # POSITIVITY part
     sid = SentimentIntensityAnalyzer()
 
-    sentences = [sentence.text for sentence in doc.sents]
+    #sentences = [sentence.text for sentence in doc.sents]
+    
+    sentences = transcript_of_textfield.split('.')
+    print(sentences)
+    
     sentences_clear = []
     for sent in sentences:
-        sent.replace('\n\n','')
+        sent.replace('\n\n',' ')
         sentences_clear.append(sent)
     analyzer = pipeline(
         task='text-classification',
         model="cmarkea/distilcamembert-base-sentiment",
         tokenizer="cmarkea/distilcamembert-base-sentiment"
     )
-    result = analyzer(
-        "J'aime me promener en forêt même si ça me donne mal aux pieds.",
-        return_all_scores=False
-    )
-
+    
     df_camembert = pd.DataFrame(columns=["phrase", "label", "score"])
 
     for sentence in sentences_clear:
